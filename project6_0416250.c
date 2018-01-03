@@ -18,6 +18,10 @@ int decoded_offset;
 int page_table[256];
 char frame[256][257]; //physical memory
 
+int p_count, t_count;
+int page_fault_count;
+int tlb_hit_count;
+
 struct table{
     int page_num;
     int frame_num;
@@ -60,15 +64,24 @@ int main(int argc, char *argv[]){
         if(feof(ifile))
             break;
     }
-    
+
+    printf("[Info] Total page falut: %d\n", page_fault_count);
+    printf("[Rate] Page fault Rate: %d/%d = %lf\n", page_fault_count, p_count, (double)(page_fault_count)/(double)(p_count));
+    printf("[Info] TLB hit times: %d\n", tlb_hit_count);
+    printf("[Rate] TLB hit rate: %d/%d = %lf\n", tlb_hit_count, t_count, (double)(tlb_hit_count)/(double)(t_count));
+
     return 0;
 }
 
 int tlb_check(void){
+    t_count++;
     int i, value;
     for(i = 0; i < 16; i++)
-        if(tlb[i].page_num == decoded_page)
+        if(tlb[i].page_num == decoded_page){
+            tlb_hit_count++;
             return tlb[i].frame_num;
+        }
+            
     
     value = page_table_check();
 
@@ -83,6 +96,7 @@ int tlb_check(void){
 int page_table_check(void){
     //page fault, it doesn't exist, trying to search in BACKING_STORE.bin
     if(page_table[decoded_page] == -1){
+        page_fault_count++;
         char temp[257];
         memset(temp, 0, 257);
         fseek(ifile_bin, decoded_page*256, SEEK_SET);
@@ -93,14 +107,11 @@ int page_table_check(void){
             frame[frame_counter][i] = temp[i];
 
         }
-                
-
-        
-        
         page_table[decoded_page] = frame_counter;
         frame_counter++;
     }
     
+    p_count++;
     return page_table[decoded_page];
 }
 
@@ -134,6 +145,9 @@ void initialize(void){
 
     tlb_counter = 0;
     frame_counter = 0;
+    p_count = 0; t_count = 0;
+    page_fault_count = 0;
+    tlb_hit_count = 0;
     for(i = 0; i < 16; i++){
         tlb[i].page_num = -1;
         tlb[1].frame_num = -1;
