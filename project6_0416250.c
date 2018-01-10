@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
     
     //input check
     if(argc != 3){
-        printf("[Usage] ./main <addresses.txt> <BACKING_STORE.bin>");
+        printf("[Usage] ./main <addresses.txt> <BACKING_STORE.bin>\n");
         exit(-1);
     }
     initialize();
@@ -79,6 +79,7 @@ int tlb_check(void){
     for(i = 0; i < 16; i++)
         if(tlb[i].page_num == decoded_page){
             tlb_hit_count++;
+            p_count++;
             return tlb[i].frame_num;
         }
             
